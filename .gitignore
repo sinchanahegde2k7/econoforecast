@@ -1,0 +1,10 @@
+venv/
+.env
+__pycache__/
+*.pyc
+instance/
+*.pkl
+*.h5
+*.keras
+saved_models/
+.DS_Store

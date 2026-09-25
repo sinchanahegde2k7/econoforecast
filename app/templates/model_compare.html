@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Model Comparison - EconoForecast AI{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('main.indicator_detail', indicator_id=indicator.id) }}" class="btn btn-link ps-0">&larr; Back to {{ indicator.name }}</a>
+
+<h2 class="mb-4">Model Comparison: {{ indicator.name }}</h2>
+
+{% if not models %}
+  <div class="alert alert-warning">No trained models found for this indicator.</div>
+{% else %}
+<div class="row">
+  <div class="col-md-6">
+    <canvas id="rmseChart" height="220"></canvas>
+  </div>
+  <div class="col-md-6">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr><th>Model</th><th>RMSE</th><th>MAE</th><th>R&sup2;</th></tr>
+      </thead>
+      <tbody>
+        {% for m in models %}
+        <tr>
+          <td>{{ model_label(m.type) }}</td>
+          <td>{{ "%.3f"|format(m.rmse) }}</td>
+          <td>{{ "%.3f"|format(m.mae) }}</td>
+          <td>{{ "%.3f"|format(m.r2_score) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="text-muted small">RMSE and MAE: lower is better. R&sup2;: closer to 1 is better; negative means the model performs worse than simply predicting the average.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const modelTypes = {{ models | map(attribute='type') | list | tojson }};
+  const rmseValues = {{ models | map(attribute='rmse') | list | tojson }};
+  const labelMap = { linear_regression: 'Linear Regression', arima: 'ARIMA', lstm: 'LSTM' };
+
+  const ctx = document.getElementById('rmseChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: modelTypes.map(t => labelMap[t] || t),
+      datasets: [{
+        label: 'RMSE by Model (lower is better)',
+        data: rmseValues,
+        backgroundColor: ['#0d6efd', '#6610f2', '#198754'],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

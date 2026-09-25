@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - EconoForecast AI{% endblock %}
+{% block content %}
+<h2 class="mb-4">Administrator Dashboard</h2>
+
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="card text-center"><div class="card-body">
+      <h6 class="text-muted">Total Datasets</h6>
+      <p class="fs-3 mb-0">{{ total_datasets }}</p>
+    </div></div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card text-center"><div class="card-body">
+      <h6 class="text-muted">Active Models</h6>
+      <p class="fs-3 mb-0">{{ total_models }}</p>
+    </div></div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card text-center"><div class="card-body">
+      <h6 class="text-muted">Forecasts Run</h6>
+      <p class="fs-3 mb-0">{{ total_forecasts }}</p>
+    </div></div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card text-center"><div class="card-body">
+      <h6 class="text-muted">Avg. R&sup2; Across Models</h6>
+      <p class="fs-3 mb-0">{{ "%.2f"|format(avg_r2) if avg_r2 is not none else "N/A" }}</p>
+    </div></div>
+  </div>
+</div>
+
+<h4>Recent Forecast Requests</h4>
+<table class="table table-striped">
+  <thead>
+    <tr><th>ID</th><th>User</th><th>Indicator</th><th>Horizon</th><th>Status</th><th>Date</th></tr>
+  </thead>
+  <tbody>
+    {% for r in recent_requests %}
+    <tr>
+      <td>#{{ r.id }}</td>
+      <td>{{ r.requested_by.name }}</td>
+      <td>{{ r.indicator.name }}</td>
+      <td>{{ r.horizon_months // 12 }} years</td>
+      <td><span class="badge bg-{{ 'success' if r.status == 'completed' else 'secondary' }}">{{ r.status }}</span></td>
+      <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-muted">No forecast requests yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
