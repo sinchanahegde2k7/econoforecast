@@ -25,7 +25,7 @@ from app import create_app, db
 from app.models import EconomicIndicator, IndicatorValue, ForecastModel
 
 N_LAGS = 3     # each model looks at the past 3 years to predict the next one
-TEST_SIZE = 5  # most recent 5 years held out, never seen during training, used only for scoring
+TEST_SIZE = 8  # most recent 8 years held out, never seen during training, used only for scoring
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(PROJECT_ROOT, "saved_models")
 
@@ -160,27 +160,25 @@ def main():
             test_series = series[-TEST_SIZE:]
             safe_name = indicator.name.lower().replace(" ", "_").replace("(", "").replace(")", "")
 
-            lr_filename = f"{safe_name}_linear_regression.pkl"
-            joblib.dump(lr_model, os.path.join(MODELS_DIR, lr_filename))
-            lr_rel_path = os.path.join("saved_models", lr_filename)
-            save_forecast_model(indicator, "linear_regression", "v1.0", lr_rel_path, lr_metrics)
+            lr_model, lr_metrics = train_linear_regression(train_series, test_series, N_LAGS)
+            lr_path = os.path.join(MODELS_DIR, f"{safe_name}_linear_regression.pkl")
+            joblib.dump(lr_model, lr_path)
+            save_forecast_model(indicator, "linear_regression", "v1.0", lr_path, lr_metrics)
             print(f"  Linear Regression -> RMSE {lr_metrics[0]:.3f}  MAE {lr_metrics[1]:.3f}  R2 {lr_metrics[2]:.3f}")
 
             arima_model, arima_metrics = train_arima(train_series, test_series)
-            arima_filename = f"{safe_name}_arima.pkl"
-            with open(os.path.join(MODELS_DIR, arima_filename), "wb") as f:
+            arima_path = os.path.join(MODELS_DIR, f"{safe_name}_arima.pkl")
+            with open(arima_path, "wb") as f:
                 pickle.dump(arima_model, f)
-            arima_rel_path = os.path.join("saved_models", arima_filename)
-            save_forecast_model(indicator, "arima", "v1.0", arima_rel_path, arima_metrics)
+            save_forecast_model(indicator, "arima", "v1.0", arima_path, arima_metrics)
             print(f"  ARIMA              -> RMSE {arima_metrics[0]:.3f}  MAE {arima_metrics[1]:.3f}  R2 {arima_metrics[2]:.3f}")
 
             (lstm_model, scaler), lstm_metrics = train_lstm(train_series, test_series, N_LAGS)
-            lstm_filename = f"{safe_name}_lstm.keras"
-            lstm_model.save(os.path.join(MODELS_DIR, lstm_filename))
-            scaler_filename = f"{safe_name}_lstm_scaler.pkl"
-            joblib.dump(scaler, os.path.join(MODELS_DIR, scaler_filename))
-            lstm_rel_path = os.path.join("saved_models", lstm_filename)
-            save_forecast_model(indicator, "lstm", "v1.0", lstm_rel_path, lstm_metrics)
+            lstm_path = os.path.join(MODELS_DIR, f"{safe_name}_lstm.keras")
+            lstm_model.save(lstm_path)
+            scaler_path = os.path.join(MODELS_DIR, f"{safe_name}_lstm_scaler.pkl")
+            joblib.dump(scaler, scaler_path)
+            save_forecast_model(indicator, "lstm", "v1.0", lstm_path, lstm_metrics)
             print(f"  LSTM               -> RMSE {lstm_metrics[0]:.3f}  MAE {lstm_metrics[1]:.3f}  R2 {lstm_metrics[2]:.3f}")
 
         print("\nAll models trained and saved to saved_models/")
